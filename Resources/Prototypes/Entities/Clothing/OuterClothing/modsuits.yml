@@ -1,0 +1,22 @@
+- type: entity
+  abstract: true
+  id: BaseModsuit
+  parent: ClothingBackpack
+  components:
+  - type: Sprite
+    sprite: Clothing/OuterClothing/Modsuits/standard.rsi
+    state: icon-control
+
+  - type: Clothing
+    sprite: Clothing/OuterClothing/Modsuits/standard.rsi
+    slots:
+    - back
+    clothingVisuals:
+      outerClothing:
+      - state: equipped-control
+
+- type: entity
+  id: StandartModsuit
+  parent: BaseModsuit
+  name: Standart modsuit
+  description: This is standart NanoTraisen modsuit
