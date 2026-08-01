@@ -12,13 +12,26 @@
     slots:
     - back
     clothingVisuals:
-      outerClothing:
+      back:
       - state: equipped-control
-  # - type: ModsuitParts
-  #   helmet: StandardModHelmet
-  #   chest: StandardModChest
-  #   gloves: StandardModGloves
-  #   boots: StandardModBoots
+
+  - type: ContainerContainer
+    containers:
+      helmet: !type:ContainerSlot { }
+      chest: !type:ContainerSlot { }
+      gloves: !type:ContainerSlot { }
+      boots: !type:ContainerSlot { }
+
+      storedGloves: !type:ContainerSlot { }
+      storedBoots: !type:ContainerSlot { }
+
+  - type: ModsuitParts
+    parts:
+      helmet: StandardModHelmet
+      chest: StandardModChest
+      gloves: StandardModGloves
+      boots: StandardModBoots
+
   - type: Modsuit
 
 - type: entity
