@@ -1,0 +1,14 @@
+- type: entity
+  parent: BaseAction
+  id: ActionModsuitWheel
+  name: Deploy MOD
+  description: Deploy your modsuit
+  components:
+  - type: Action
+    itemIconStyle: NoItem
+  - type: Sprite
+    sprite: Interface/Actions/actions_modsuit.rsi
+    layers:
+    - state: deploy
+  - type: InstantAction
+    event: !type:DeployModsuit

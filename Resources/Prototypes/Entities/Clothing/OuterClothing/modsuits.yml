@@ -14,9 +14,23 @@
     clothingVisuals:
       outerClothing:
       - state: equipped-control
+  # - type: ModsuitParts
+  #   helmet: StandardModHelmet
+  #   chest: StandardModChest
+  #   gloves: StandardModGloves
+  #   boots: StandardModBoots
+  - type: Modsuit
 
 - type: entity
-  id: StandartModsuit
+  id: StandardModsuit
   parent: BaseModsuit
-  name: Standart modsuit
+  name: Standard modsuit
   description: This is standart NanoTraisen modsuit
+  components:
+  - type: Clothing
+    sprite: Clothing/OuterClothing/Modsuits/standard.rsi
+    slots:
+    - back
+    clothingVisuals:
+      back:
+      - state: equipped-control
