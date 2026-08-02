@@ -1,3 +1,4 @@
+using Robust.Shared.Audio;
 using Robust.Shared.GameStates;
 using Robust.Shared.Prototypes;
 
@@ -25,6 +26,12 @@ public sealed partial class ModsuitComponent : Component
 
     [DataField]
     public Dictionary<ModsuitPartType, EntProtoId> Parts = new();
+
+    [DataField]
+    public SoundSpecifier DeploySound = new SoundPathSpecifier("/Audio/Mecha/mechmove03.ogg");
+    [DataField]
+    public SoundSpecifier ErrorSound = new SoundPathSpecifier("/Audio/Machines/airlock_deny.ogg");
+
     [ViewVariables]
     public Dictionary<ModsuitPartType, bool> DeployedParts = new();
     [ViewVariables]

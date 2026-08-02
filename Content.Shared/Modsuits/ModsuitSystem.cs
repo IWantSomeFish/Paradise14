@@ -6,6 +6,8 @@ using Robust.Shared.Containers;
 using Content.Shared.Inventory;
 using System.Linq;
 using Content.Shared.Interaction.Components;
+using Robust.Shared.Audio;
+using Robust.Shared.Audio.Systems;
 
 namespace Content.Shared.Modsuits;
 
@@ -18,6 +20,7 @@ public sealed partial class SharedModsuitSystem : EntitySystem
     [Dependency] private readonly SharedActionsSystem _actions = default!;
     [Dependency] private readonly SharedContainerSystem _container = default!;
     [Dependency] private readonly InventorySystem _inventory = default!;
+    [Dependency] private readonly SharedAudioSystem _audio = default!;
 
     public override void Initialize()
     {
@@ -76,7 +79,6 @@ public sealed partial class SharedModsuitSystem : EntitySystem
     }
     private void OnAction(EntityUid uid, ModsuitComponent component, DeployModsuit args)
     {
-        Log.Info($"Deploying modsuit for {args.Performer}");
         args.Handled = true;
         foreach (var part in component.Parts.Keys.ToList())
         {
@@ -96,10 +98,25 @@ public sealed partial class SharedModsuitSystem : EntitySystem
             return;
 
         var slot = ModsuitContainers.GetInventorySlot(part);
-
+        if (ModsuitContainers.TryGetStorageContainer(part, out var storageName))
+        {
+            if (_inventory.TryGetSlotEntity(wearer, slot, out var oldItem) && oldItem != null)
+            {
+                if (_inventory.TryUnequip(wearer, wearer, slot, force: true))
+                {
+                    if (_container.TryGetContainer(modsuit, storageName, out var storage))
+                        _container.Insert(oldItem.Value, storage);
+                }
+            }
+            else
+            {
+                _audio.PlayPvs(component.ErrorSound, wearer, AudioParams.Default.WithVolume(-2f));
+            }
+        }
         if (!_inventory.TryEquip(wearer, entity, slot, force: true))
             return;
 
+        _audio.PlayPvs(component.DeploySound, wearer, AudioParams.Default.WithVolume(-2f));
         component.DeployedParts[part] = true;
         EnsureComp<UnremoveableComponent>(entity);
         if (!HasComp<UnremoveableComponent>(modsuit))
@@ -118,10 +135,26 @@ public sealed partial class SharedModsuitSystem : EntitySystem
 
         if (!_inventory.TryUnequip(modsuit, wearer, slot, force: true))
             return;
+
         var container = _container.EnsureContainer<ContainerSlot>(modsuit, ModsuitContainers.GetPartContainer(part));
+
         if (!_container.Insert(entity, container))
             return;
 
+        if (ModsuitContainers.TryGetStorageContainer(part, out var storageName))
+        {
+            if (!_container.TryGetContainer(modsuit, storageName, out var baseContainer))
+                return;
+            if (baseContainer is not ContainerSlot storage)
+                return;
+            if (storage.ContainedEntity != null)
+            {
+                var oldItem = storage.ContainedEntity.Value;
+                _container.Remove(oldItem, storage);
+                _inventory.TryEquip(wearer, oldItem, slot, force: true);
+            }
+        }
+        _audio.PlayPvs(component.DeploySound, wearer, AudioParams.Default.WithVolume(-2f));
         component.DeployedParts[part] = false;
 
         if (!component.DeployedParts.Values.Any(x => x))
