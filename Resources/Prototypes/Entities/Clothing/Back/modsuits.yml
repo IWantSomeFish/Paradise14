@@ -4,11 +4,11 @@
   parent: ClothingBackpack
   components:
   - type: Sprite
-    sprite: Clothing/OuterClothing/Modsuits/standard.rsi
+    sprite: Clothing/Back/Modsuits/standard.rsi
     state: icon-control
 
   - type: Clothing
-    sprite: Clothing/OuterClothing/Modsuits/standard.rsi
+    sprite: Clothing/Back/Modsuits/standard.rsi
     slots:
     - back
     clothingVisuals:
@@ -25,14 +25,12 @@
       storedGloves: !type:ContainerSlot { }
       storedBoots: !type:ContainerSlot { }
 
-  - type: ModsuitParts
-    parts:
-      helmet: StandardModHelmet
-      chest: StandardModChest
-      gloves: StandardModGloves
-      boots: StandardModBoots
-
   - type: Modsuit
+    parts:
+      Helmet: StandardModHelmet
+      Chest: StandardModChest
+      Gloves: StandardModGloves
+      Boots: StandardModBoots
 
 - type: entity
   id: StandardModsuit
@@ -41,7 +39,7 @@
   description: This is standart NanoTraisen modsuit
   components:
   - type: Clothing
-    sprite: Clothing/OuterClothing/Modsuits/standard.rsi
+    sprite: Clothing/Back/Modsuits/standard.rsi
     slots:
     - back
     clothingVisuals:

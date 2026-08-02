@@ -1,0 +1,15 @@
+- type: entity
+  id: StandardModHelmet
+  parent: ClothingHeadBase
+  name: standard MOD helmet
+  components:
+  - type: Sprite
+    sprite: Clothing/Back/Modsuits/standard.rsi
+    state: icon-helmet
+  - type: Clothing
+    sprite: Clothing/Back/Modsuits/standard.rsi
+    slots:
+    - head
+    clothingVisuals:
+      head:
+      - state: equipped-helmet

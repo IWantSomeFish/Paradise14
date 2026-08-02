@@ -1,0 +1,15 @@
+- type: entity
+  id: StandardModGloves
+  parent: ClothingHandsBase
+  name: standard MOD gloves
+  components:
+  - type: Sprite
+    sprite: Clothing/Back/Modsuits/standard.rsi
+    state: icon-gauntlets
+  - type: Clothing
+    sprite: Clothing/Back/Modsuits/standard.rsi
+    slots:
+    - gloves
+    clothingVisuals:
+      gloves:
+      - state: equipped-gauntlets

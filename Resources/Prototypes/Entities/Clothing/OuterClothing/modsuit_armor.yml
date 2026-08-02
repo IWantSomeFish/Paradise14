@@ -1,0 +1,15 @@
+- type: entity
+  id: StandardModChest
+  parent: ClothingOuterBase
+  name: standard MOD chestplate
+  components:
+  - type: Sprite
+    sprite: Clothing/Back/Modsuits/standard.rsi
+    state: icon-chestplate
+  - type: Clothing
+    sprite: Clothing/Back/Modsuits/standard.rsi
+    slots:
+    - outerClothing
+    clothingVisuals:
+      outerClothing:
+      - state: equipped-chestplate
