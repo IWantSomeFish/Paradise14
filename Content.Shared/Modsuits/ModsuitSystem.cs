@@ -21,15 +21,15 @@ public sealed partial class SharedModsuitSystem : EntitySystem
     [Dependency] private readonly SharedContainerSystem _container = default!;
     [Dependency] private readonly InventorySystem _inventory = default!;
     [Dependency] private readonly SharedAudioSystem _audio = default!;
-
+    [Dependency] private readonly SharedUserInterfaceSystem _ui = default!;
     public override void Initialize()
     {
         base.Initialize();
-
         SubscribeLocalEvent<ModsuitComponent, GotEquippedEvent>(OnEquipped);
         SubscribeLocalEvent<ModsuitComponent, GotUnequippedEvent>(OnUnequipped);
-        SubscribeLocalEvent<ModsuitComponent, DeployModsuit>(OnAction);
+        SubscribeLocalEvent<ModsuitComponent, DeployModsuit>(OpenRadialUI);
         SubscribeLocalEvent<ModsuitComponent, MapInitEvent>(OnMapInit);
+        SubscribeLocalEvent<ModsuitComponent, ModsuitSystemMessage>(OnSystemMessage);
     }
 
     /// <summary>
@@ -60,6 +60,7 @@ public sealed partial class SharedModsuitSystem : EntitySystem
 
             component.SpawnedParts.TryAdd(part, entity);
             component.DeployedParts.TryAdd(part, false);
+            Dirty(uid, component);
         }
     }
     /// <summary>
@@ -77,20 +78,17 @@ public sealed partial class SharedModsuitSystem : EntitySystem
         _actions.RemoveAction(args.EquipTarget, component.ActionEntity);
         component.ActionEntity = null;
     }
-    private void OnAction(EntityUid uid, ModsuitComponent component, DeployModsuit args)
+    private void OpenRadialUI(EntityUid uid, ModsuitComponent component, DeployModsuit args)
     {
         args.Handled = true;
-        foreach (var part in component.Parts.Keys.ToList())
-        {
-
-            if (!component.DeployedParts.TryGetValue(part, out var deployed))
-                continue;
-
-            if (deployed)
-                RetractPart(args.Performer, uid, part, component);
-            else
-                DeployPart(args.Performer, uid, part, component);
-        }
+        _ui.OpenUi(uid, ModsuitUiKey.Radial, args.Performer);
+    }
+    private void OnSystemMessage(EntityUid uid, ModsuitComponent component, ModsuitSystemMessage args)
+    {
+        if (component.DeployedParts.TryGetValue(args.Part, out var deployed) && deployed)
+            RetractPart(args.Actor, uid, args.Part, component);
+        else
+            DeployPart(args.Actor, uid, args.Part, component);
     }
     private void DeployPart(EntityUid wearer, EntityUid modsuit, ModsuitPartType part, ModsuitComponent component)
     {
@@ -108,17 +106,20 @@ public sealed partial class SharedModsuitSystem : EntitySystem
                         _container.Insert(oldItem.Value, storage);
                 }
             }
-            else
+        }
+        if (!_inventory.TryEquip(wearer, entity, slot, force: true))
+        {
+            if (_inventory.TryGetSlotEntity(wearer, slot, out var oldItem) && oldItem != null)
             {
                 _audio.PlayPvs(component.ErrorSound, wearer, AudioParams.Default.WithVolume(-2f));
             }
-        }
-        if (!_inventory.TryEquip(wearer, entity, slot, force: true))
             return;
+        }
 
         _audio.PlayPvs(component.DeploySound, wearer, AudioParams.Default.WithVolume(-2f));
         component.DeployedParts[part] = true;
         EnsureComp<UnremoveableComponent>(entity);
+
         if (!HasComp<UnremoveableComponent>(modsuit))
         {
             EnsureComp<UnremoveableComponent>(modsuit);

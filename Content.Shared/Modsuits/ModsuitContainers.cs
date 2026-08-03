@@ -11,13 +11,11 @@ public static class ModsuitContainers
         { ModsuitPartType.Gloves, "gloves" },
         { ModsuitPartType.Boots, "boots" },
     };
-
     private static readonly Dictionary<ModsuitPartType, string> StorageContainers = new()
     {
         { ModsuitPartType.Gloves, "storedGloves" },
         { ModsuitPartType.Boots, "storedBoots" },
     };
-
     private static readonly Dictionary<ModsuitPartType, string> InventorySlots = new()
     {
         { ModsuitPartType.Helmet, "head" },

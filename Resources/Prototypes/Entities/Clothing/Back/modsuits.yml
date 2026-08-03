@@ -31,6 +31,10 @@
       Chest: StandardModChest
       Gloves: StandardModGloves
       Boots: StandardModBoots
+  - type: UserInterface
+    interfaces:
+      enum.ModsuitUiKey.Radial:
+        type: ModsuitMenuBoundUserInterface
 
 - type: entity
   id: StandardModsuit
