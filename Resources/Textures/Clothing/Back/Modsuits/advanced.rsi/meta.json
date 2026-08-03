@@ -33,10 +33,10 @@
             "name": "icon-chestplate"
         },
         {
-            "name": "icon-gauntlets-sealed"
+            "name": "icon-gloves-sealed"
         },
         {
-            "name": "icon-gauntlets"
+            "name": "icon-gloves"
         },
         {
             "name": "icon-boots-sealed"
@@ -69,11 +69,11 @@
             "directions": 4
         },
         {
-            "name": "equipped-gauntlets-sealed",
+            "name": "equipped-gloves-sealed",
             "directions": 4
         },
         {
-            "name": "equipped-gauntlets",
+            "name": "equipped-gloves",
             "directions": 4
         },
         {
