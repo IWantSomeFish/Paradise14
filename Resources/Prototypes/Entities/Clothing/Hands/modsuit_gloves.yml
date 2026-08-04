@@ -3,13 +3,31 @@
   parent: ClothingHandsBase
   name: standard MOD gloves
   components:
+
   - type: Sprite
     sprite: Clothing/Back/Modsuits/standard.rsi
-    state: icon-gauntlets
+    layers:
+      - state: icon-gloves
+        map: ["enum.ToggleableVisuals.Layer"]
+
   - type: Clothing
     sprite: Clothing/Back/Modsuits/standard.rsi
     slots:
     - gloves
     clothingVisuals:
       gloves:
-      - state: equipped-gauntlets
+      - state: equipped-gloves
+
+  - type: ToggleableVisuals
+    spriteLayer: enum.ToggleableVisuals.Layer
+    clothingVisuals:
+      gloves:
+      - state: equipped-gloves-sealed
+
+  - type: Appearance
+  - type: GenericVisualizer
+    visuals:
+      enum.ModsuitVisuals.Activated:
+        enum.ToggleableVisuals.Layer:
+            True: {state: "icon-gloves-sealed"}
+            False: {state: "icon-gloves"}

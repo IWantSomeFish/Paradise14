@@ -1,5 +1,3 @@
-using Content.Shared.Modsuits.Components;
-
 namespace Content.Shared.Modsuits;
 
 public static class ModsuitContainers
@@ -23,10 +21,20 @@ public static class ModsuitContainers
         { ModsuitPartType.Gloves, "gloves" },
         { ModsuitPartType.Boots, "shoes" },
     };
+
+    private static readonly Dictionary<ModsuitPartType, string> PartNames = new()
+    {
+        { ModsuitPartType.Helmet, "helmet" },
+        { ModsuitPartType.Chest, "chestplate" },
+        { ModsuitPartType.Gloves, "gloves" },
+        { ModsuitPartType.Boots, "boots" },
+    };
     public static string GetPartContainer(ModsuitPartType part)
         => PartContainers[part];
     public static string GetInventorySlot(ModsuitPartType part)
         => InventorySlots[part];
     public static bool TryGetStorageContainer(ModsuitPartType part, out string container)
         => StorageContainers.TryGetValue(part, out container!);
+    public static string GetPartName(ModsuitPartType part)
+        => PartNames[part];
 }

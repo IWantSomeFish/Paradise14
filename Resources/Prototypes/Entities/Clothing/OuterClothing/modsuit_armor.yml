@@ -3,9 +3,13 @@
   parent: ClothingOuterBase
   name: standard MOD chestplate
   components:
+
   - type: Sprite
     sprite: Clothing/Back/Modsuits/standard.rsi
-    state: icon-chestplate
+    layers:
+      - state: icon-chestplate
+        map: ["enum.ToggleableVisuals.Layer"]
+
   - type: Clothing
     sprite: Clothing/Back/Modsuits/standard.rsi
     slots:
@@ -13,3 +17,17 @@
     clothingVisuals:
       outerClothing:
       - state: equipped-chestplate
+
+  - type: ToggleableVisuals
+    spriteLayer: enum.ToggleableVisuals.Layer
+    clothingVisuals:
+      outerClothing:
+      - state: equipped-chestplate-sealed
+
+  - type: Appearance
+  - type: GenericVisualizer
+    visuals:
+      enum.ModsuitVisuals.Activated:
+        enum.ToggleableVisuals.Layer:
+            True: {state: "icon-chestplate-sealed"}
+            False: {state: "icon-chestplate"}

@@ -3,9 +3,13 @@
   parent: ClothingHeadBase
   name: standard MOD helmet
   components:
+
   - type: Sprite
     sprite: Clothing/Back/Modsuits/standard.rsi
-    state: icon-helmet
+    layers:
+      - state: icon-helmet
+        map: ["enum.ToggleableVisuals.Layer"]
+
   - type: Clothing
     sprite: Clothing/Back/Modsuits/standard.rsi
     slots:
@@ -13,3 +17,17 @@
     clothingVisuals:
       head:
       - state: equipped-helmet
+
+  - type: ToggleableVisuals
+    spriteLayer: enum.ToggleableVisuals.Layer
+    clothingVisuals:
+      head:
+      - state: equipped-helmet-sealed
+
+  - type: Appearance
+  - type: GenericVisualizer
+    visuals:
+      enum.ModsuitVisuals.Activated:
+        enum.ToggleableVisuals.Layer:
+            True: {state: "icon-helmet-sealed"}
+            False: {state: "icon-helmet"}

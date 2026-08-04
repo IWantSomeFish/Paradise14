@@ -1,14 +1,11 @@
-using System.Linq;
-using Content.Client.Popups;
 using Content.Client.UserInterface.Controls;
+using Content.Shared.Modsuits;
 using Content.Shared.Modsuits.Components;
 using Content.Shared.Modsuits.Events;
 using JetBrains.Annotations;
+using Robust.Shared.Collections;
 using Robust.Client.GameObjects;
 using Robust.Client.UserInterface;
-using Robust.Shared.Collections;
-using Robust.Shared.Player;
-using Robust.Shared.Prototypes;
 using Robust.Shared.Utility;
 namespace Content.Client.Modsuits;
 
@@ -50,7 +47,7 @@ public sealed partial class ModsuitMenuBoundUserInterface : BoundUserInterface
         {
             [ModsuitPartType.Helmet] = ("modsuit-part-helmet", new SpriteSpecifier.Rsi(sprite.BaseRSI!.Path, "icon-helmet")),
             [ModsuitPartType.Chest] = ("modsuit-part-chest", new SpriteSpecifier.Rsi(sprite.BaseRSI!.Path, "icon-chestplate")),
-            [ModsuitPartType.Gloves] = ("modsuit-part-gloves", new SpriteSpecifier.Rsi(sprite.BaseRSI!.Path, "icon-gauntlets")),
+            [ModsuitPartType.Gloves] = ("modsuit-part-gloves", new SpriteSpecifier.Rsi(sprite.BaseRSI!.Path, "icon-gloves")),
             [ModsuitPartType.Boots] = ("modsuit-part-boots", new SpriteSpecifier.Rsi(sprite.BaseRSI!.Path, "icon-boots")),
         };
     }
@@ -58,7 +55,7 @@ public sealed partial class ModsuitMenuBoundUserInterface : BoundUserInterface
     {
         var buttons = new List<RadialMenuOptionBase>();
 
-        foreach (var part in modsuit.Parts.Keys.ToList())
+        foreach (var part in Enum.GetValues<ModsuitPartType>())
         {
             buttons.Add(new RadialMenuActionOption<ModsuitPartType>(HandleMenuOptionClick, part)
             {

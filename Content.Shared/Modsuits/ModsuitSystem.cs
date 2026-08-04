@@ -8,7 +8,7 @@ using System.Linq;
 using Content.Shared.Interaction.Components;
 using Robust.Shared.Audio;
 using Robust.Shared.Audio.Systems;
-
+using Robust.Shared.Timing;
 namespace Content.Shared.Modsuits;
 
 /// <summary>
@@ -22,14 +22,17 @@ public sealed partial class SharedModsuitSystem : EntitySystem
     [Dependency] private readonly InventorySystem _inventory = default!;
     [Dependency] private readonly SharedAudioSystem _audio = default!;
     [Dependency] private readonly SharedUserInterfaceSystem _ui = default!;
+    [Dependency] private readonly SharedAppearanceSystem _appearance = default!;
+
     public override void Initialize()
     {
         base.Initialize();
+        SubscribeLocalEvent<ModsuitComponent, MapInitEvent>(OnMapInit);
         SubscribeLocalEvent<ModsuitComponent, GotEquippedEvent>(OnEquipped);
         SubscribeLocalEvent<ModsuitComponent, GotUnequippedEvent>(OnUnequipped);
         SubscribeLocalEvent<ModsuitComponent, DeployModsuit>(OpenRadialUI);
-        SubscribeLocalEvent<ModsuitComponent, MapInitEvent>(OnMapInit);
         SubscribeLocalEvent<ModsuitComponent, ModsuitSystemMessage>(OnSystemMessage);
+        SubscribeLocalEvent<ModsuitComponent, PowerModsuit>(OnActivate);
     }
 
     /// <summary>
@@ -68,15 +71,49 @@ public sealed partial class SharedModsuitSystem : EntitySystem
     /// </summary>
     private void OnEquipped(EntityUid uid, ModsuitComponent component, GotEquippedEvent args)
     {
-        _actions.AddAction(args.EquipTarget, ref component.ActionEntity, component.DeployAction, uid);
+        foreach (var action in component.ActionEndpoints)
+        {
+            EntityUid? entity = null;
+            if (_actions.AddAction(args.EquipTarget, ref entity, out _, action, uid))
+                component.ActionEntities.Add(entity.Value);
+            Dirty(uid, component);
+        }
     }
     /// <summary>
     /// Remove deploy, power on and status panel access actions when the modsuit is unequipped
     /// </summary>
     private void OnUnequipped(EntityUid uid, ModsuitComponent component, GotUnequippedEvent args)
     {
-        _actions.RemoveAction(args.EquipTarget, component.ActionEntity);
-        component.ActionEntity = null;
+        foreach (var action in component.ActionEntities)
+        {
+            _actions.RemoveAction(args.EquipTarget, action);
+            Dirty(uid, component);
+        }
+
+        component.ActionEntities.Clear();
+    }
+    private void OnActivate(EntityUid uid, ModsuitComponent component, PowerModsuit args)
+    {
+        args.Handled = true;
+        var delay = 0;
+        foreach (var partKey in component.SpawnedParts.Keys.ToList())
+        {
+            var currentDelay = delay;
+            Timer.Spawn(TimeSpan.FromSeconds(currentDelay), () =>
+            {
+                var part = component.SpawnedParts[partKey];
+                _appearance.SetData(part, ModsuitVisuals.Activated, !component.PowerOn);
+                _audio.PlayPvs(component.DeploySound, part, AudioParams.Default.WithVolume(-2f));
+            });
+            delay += component.ActivateDelay;
+        }
+        Timer.Spawn(TimeSpan.FromSeconds(delay), () =>
+            {
+                _appearance.SetData(uid, ModsuitVisuals.Activated, !component.PowerOn);
+                _audio.PlayPvs(component.PowerOnSound, uid, AudioParams.Default.WithVolume(-2f));
+            });
+        component.PowerOn = !component.PowerOn;
+        Dirty(uid, component);
     }
     private void OpenRadialUI(EntityUid uid, ModsuitComponent component, DeployModsuit args)
     {

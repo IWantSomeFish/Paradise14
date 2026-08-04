@@ -3,9 +3,13 @@
   parent: ClothingShoesBase
   name: standard MOD boots
   components:
+
   - type: Sprite
     sprite: Clothing/Back/Modsuits/standard.rsi
-    state: icon-boots
+    layers:
+      - state: icon-boots
+        map: ["enum.ToggleableVisuals.Layer"]
+
   - type: Clothing
     sprite: Clothing/Back/Modsuits/standard.rsi
     slots:
@@ -13,3 +17,17 @@
     clothingVisuals:
       shoes:
       - state: equipped-boots
+
+  - type: ToggleableVisuals
+    spriteLayer: enum.ToggleableVisuals.Layer
+    clothingVisuals:
+      shoes:
+      - state: equipped-boots-sealed
+
+  - type: Appearance
+  - type: GenericVisualizer
+    visuals:
+      enum.ModsuitVisuals.Activated:
+        enum.ToggleableVisuals.Layer:
+            True: {state: "icon-boots-sealed"}
+            False: {state: "icon-boots"}

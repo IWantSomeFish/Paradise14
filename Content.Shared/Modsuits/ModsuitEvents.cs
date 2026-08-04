@@ -9,6 +9,10 @@ public sealed partial class DeployModsuit : InstantActionEvent
 
 }
 
+public sealed partial class PowerModsuit : InstantActionEvent
+{
+
+}
 [Serializable, NetSerializable]
 public sealed class ModsuitSystemMessage(ModsuitPartType part) : BoundUserInterfaceMessage
 {

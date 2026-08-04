@@ -3,9 +3,12 @@
   id: BaseModsuit
   parent: ClothingBackpack
   components:
+
   - type: Sprite
     sprite: Clothing/Back/Modsuits/standard.rsi
-    state: icon-control
+    layers:
+      - state: icon-control
+        map: ["enum.ToggleableVisuals.Layer"]
 
   - type: Clothing
     sprite: Clothing/Back/Modsuits/standard.rsi
@@ -14,6 +17,20 @@
     clothingVisuals:
       back:
       - state: equipped-control
+
+  - type: ToggleableVisuals
+    spriteLayer: enum.ToggleableVisuals.Layer
+    clothingVisuals:
+      back:
+      - state: equipped-control-sealed
+
+  - type: Appearance
+  - type: GenericVisualizer
+    visuals:
+      enum.ModsuitVisuals.Activated:
+        enum.ToggleableVisuals.Layer:
+            True: {state: "icon-control-sealed"}
+            False: {state: "icon-control"}
 
   - type: ContainerContainer
     containers:
@@ -31,10 +48,16 @@
       Chest: StandardModChest
       Gloves: StandardModGloves
       Boots: StandardModBoots
+    actionEndpoints:
+      - ActionModsuitWheel
+      - ActionModsuitPower
+
   - type: UserInterface
     interfaces:
       enum.ModsuitUiKey.Radial:
         type: ModsuitMenuBoundUserInterface
+
+# Realisations of modsuits
 
 - type: entity
   id: StandardModsuit
