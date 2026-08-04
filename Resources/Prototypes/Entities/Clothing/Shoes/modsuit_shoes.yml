@@ -8,7 +8,7 @@
     sprite: Clothing/Back/Modsuits/standard.rsi
     layers:
       - state: icon-boots
-        map: ["enum.ToggleableVisuals.Layer"]
+        map: ["enum.ModsuitVisuals.Activated"]
 
   - type: Clothing
     sprite: Clothing/Back/Modsuits/standard.rsi
@@ -28,6 +28,6 @@
   - type: GenericVisualizer
     visuals:
       enum.ModsuitVisuals.Activated:
-        enum.ToggleableVisuals.Layer:
+        enum.ModsuitVisuals.IconLayer:
             True: {state: "icon-boots-sealed"}
             False: {state: "icon-boots"}

@@ -9,6 +9,9 @@ using Content.Shared.Interaction.Components;
 using Robust.Shared.Audio;
 using Robust.Shared.Audio.Systems;
 using Robust.Shared.Timing;
+using Robust.Shared.Network;
+using Content.Shared.Toggleable;
+
 namespace Content.Shared.Modsuits;
 
 /// <summary>
@@ -23,6 +26,7 @@ public sealed partial class SharedModsuitSystem : EntitySystem
     [Dependency] private readonly SharedAudioSystem _audio = default!;
     [Dependency] private readonly SharedUserInterfaceSystem _ui = default!;
     [Dependency] private readonly SharedAppearanceSystem _appearance = default!;
+    [Dependency] private readonly INetManager _net = default!;
 
     public override void Initialize()
     {
@@ -94,22 +98,26 @@ public sealed partial class SharedModsuitSystem : EntitySystem
     }
     private void OnActivate(EntityUid uid, ModsuitComponent component, PowerModsuit args)
     {
+        if (_net.IsClient)
+            return;
         args.Handled = true;
         var delay = 0;
-        foreach (var partKey in component.SpawnedParts.Keys.ToList())
+        foreach (var partKey in component.SpawnedParts.Keys)
         {
             var currentDelay = delay;
             Timer.Spawn(TimeSpan.FromSeconds(currentDelay), () =>
             {
                 var part = component.SpawnedParts[partKey];
-                _appearance.SetData(part, ModsuitVisuals.Activated, !component.PowerOn);
-                _audio.PlayPvs(component.DeploySound, part, AudioParams.Default.WithVolume(-2f));
+                _appearance.SetData(part, ToggleableVisuals.Enabled, component.PowerOn);
+                _appearance.SetData(part, ModsuitVisuals.Activated, component.PowerOn);
+                _audio.PlayPvs(component.DeploySound, uid, AudioParams.Default.WithVolume(-2f));
             });
             delay += component.ActivateDelay;
         }
         Timer.Spawn(TimeSpan.FromSeconds(delay), () =>
             {
-                _appearance.SetData(uid, ModsuitVisuals.Activated, !component.PowerOn);
+                _appearance.SetData(uid, ToggleableVisuals.Enabled, component.PowerOn);
+                _appearance.SetData(uid, ModsuitVisuals.Activated, component.PowerOn);
                 _audio.PlayPvs(component.PowerOnSound, uid, AudioParams.Default.WithVolume(-2f));
             });
         component.PowerOn = !component.PowerOn;
@@ -148,12 +156,12 @@ public sealed partial class SharedModsuitSystem : EntitySystem
         {
             if (_inventory.TryGetSlotEntity(wearer, slot, out var oldItem) && oldItem != null)
             {
-                _audio.PlayPvs(component.ErrorSound, wearer, AudioParams.Default.WithVolume(-2f));
+                _audio.PlayPvs(component.ErrorSound, modsuit, AudioParams.Default.WithVolume(-2f));
             }
             return;
         }
 
-        _audio.PlayPvs(component.DeploySound, wearer, AudioParams.Default.WithVolume(-2f));
+        _audio.PlayPvs(component.DeploySound, modsuit, AudioParams.Default.WithVolume(-2f));
         component.DeployedParts[part] = true;
         EnsureComp<UnremoveableComponent>(entity);
 
