@@ -11,6 +11,7 @@ using Robust.Shared.Audio.Systems;
 using Robust.Shared.Timing;
 using Robust.Shared.Network;
 using Content.Shared.Toggleable;
+using Content.Shared.DoAfter;
 
 namespace Content.Shared.Modsuits;
 
@@ -27,16 +28,22 @@ public sealed partial class SharedModsuitSystem : EntitySystem
     [Dependency] private readonly SharedUserInterfaceSystem _ui = default!;
     [Dependency] private readonly SharedAppearanceSystem _appearance = default!;
     [Dependency] private readonly INetManager _net = default!;
+    [Dependency] private readonly SharedDoAfterSystem _doAfter = default!;
 
     public override void Initialize()
     {
         base.Initialize();
         SubscribeLocalEvent<ModsuitComponent, MapInitEvent>(OnMapInit);
+
         SubscribeLocalEvent<ModsuitComponent, GotEquippedEvent>(OnEquipped);
         SubscribeLocalEvent<ModsuitComponent, GotUnequippedEvent>(OnUnequipped);
+        /// events for UI handle
         SubscribeLocalEvent<ModsuitComponent, DeployModsuit>(OpenRadialUI);
         SubscribeLocalEvent<ModsuitComponent, ModsuitSystemMessage>(OnSystemMessage);
         SubscribeLocalEvent<ModsuitComponent, PowerModsuit>(OnActivate);
+        // events for modsuit state change
+        SubscribeLocalEvent<ModsuitComponent, DeployPartEvent>(DeployPart);
+        SubscribeLocalEvent<ModsuitComponent, RetractPartEvent>(RetractPart);
     }
 
     /// <summary>
@@ -104,12 +111,13 @@ public sealed partial class SharedModsuitSystem : EntitySystem
         var delay = 0;
         foreach (var partKey in component.SpawnedParts.Keys)
         {
+            if (!component.DeployedParts[partKey])
+                continue;
             var currentDelay = delay;
             Timer.Spawn(TimeSpan.FromSeconds(currentDelay), () =>
             {
                 var part = component.SpawnedParts[partKey];
                 _appearance.SetData(part, ToggleableVisuals.Enabled, component.PowerOn);
-                _appearance.SetData(part, ModsuitVisuals.Activated, component.PowerOn);
                 _audio.PlayPvs(component.DeploySound, uid, AudioParams.Default.WithVolume(-2f));
             });
             delay += component.ActivateDelay;
@@ -117,7 +125,6 @@ public sealed partial class SharedModsuitSystem : EntitySystem
         Timer.Spawn(TimeSpan.FromSeconds(delay), () =>
             {
                 _appearance.SetData(uid, ToggleableVisuals.Enabled, component.PowerOn);
-                _appearance.SetData(uid, ModsuitVisuals.Activated, component.PowerOn);
                 _audio.PlayPvs(component.PowerOnSound, uid, AudioParams.Default.WithVolume(-2f));
             });
         component.PowerOn = !component.PowerOn;
@@ -130,66 +137,76 @@ public sealed partial class SharedModsuitSystem : EntitySystem
     }
     private void OnSystemMessage(EntityUid uid, ModsuitComponent component, ModsuitSystemMessage args)
     {
+        DoAfterEvent doAfter;
         if (component.DeployedParts.TryGetValue(args.Part, out var deployed) && deployed)
-            RetractPart(args.Actor, uid, args.Part, component);
-        else
-            DeployPart(args.Actor, uid, args.Part, component);
-    }
-    private void DeployPart(EntityUid wearer, EntityUid modsuit, ModsuitPartType part, ModsuitComponent component)
-    {
-        if (!component.SpawnedParts.TryGetValue(part, out var entity))
-            return;
-
-        var slot = ModsuitContainers.GetInventorySlot(part);
-        if (ModsuitContainers.TryGetStorageContainer(part, out var storageName))
         {
-            if (_inventory.TryGetSlotEntity(wearer, slot, out var oldItem) && oldItem != null)
+            doAfter = new RetractPartEvent(GetNetEntity(args.Actor), GetNetEntity(uid), args.Part);
+        }
+        else
+            doAfter = new DeployPartEvent(GetNetEntity(args.Actor), GetNetEntity(uid), args.Part);
+        var doAfterArgs = new DoAfterArgs(EntityManager, args.Actor, TimeSpan.FromSeconds(component.PowerOn ? component.ActivateDelay : 0), doAfter, uid);
+        _doAfter.TryStartDoAfter(doAfterArgs);
+    }
+    private void DeployPart(EntityUid uid, ModsuitComponent component, DeployPartEvent args)
+    {
+        if (_net.IsClient)
+            return;
+        if (!component.SpawnedParts.TryGetValue(args.Part, out var entity))
+            return;
+        var perfomer = GetEntity(args.Performer);
+        var slot = ModsuitContainers.GetInventorySlot(args.Part);
+        if (ModsuitContainers.TryGetStorageContainer(args.Part, out var storageName))
+        {
+            if (_inventory.TryGetSlotEntity(perfomer, slot, out var oldItem) && oldItem != null)
             {
-                if (_inventory.TryUnequip(wearer, wearer, slot, force: true))
+                if (_inventory.TryUnequip(perfomer, perfomer, slot, force: true))
                 {
-                    if (_container.TryGetContainer(modsuit, storageName, out var storage))
+                    if (_container.TryGetContainer(uid, storageName, out var storage))
                         _container.Insert(oldItem.Value, storage);
                 }
             }
         }
-        if (!_inventory.TryEquip(wearer, entity, slot, force: true))
+
+        if (!_inventory.TryEquip(perfomer, entity, slot, force: true))
         {
-            if (_inventory.TryGetSlotEntity(wearer, slot, out var oldItem) && oldItem != null)
+            if (_inventory.TryGetSlotEntity(perfomer, slot, out var oldItem) && oldItem != null)
             {
-                _audio.PlayPvs(component.ErrorSound, modsuit, AudioParams.Default.WithVolume(-2f));
+                _audio.PlayPvs(component.ErrorSound, uid, AudioParams.Default.WithVolume(-2f));
             }
             return;
         }
 
-        _audio.PlayPvs(component.DeploySound, modsuit, AudioParams.Default.WithVolume(-2f));
-        component.DeployedParts[part] = true;
+        _audio.PlayPvs(component.DeploySound, uid, AudioParams.Default.WithVolume(-2f));
+        component.DeployedParts[args.Part] = true;
         EnsureComp<UnremoveableComponent>(entity);
 
-        if (!HasComp<UnremoveableComponent>(modsuit))
+        if (!HasComp<UnremoveableComponent>(uid))
         {
-            EnsureComp<UnremoveableComponent>(modsuit);
+            EnsureComp<UnremoveableComponent>(uid);
         }
     }
-    private void RetractPart(EntityUid wearer, EntityUid modsuit, ModsuitPartType part, ModsuitComponent component)
+    private void RetractPart(EntityUid uid, ModsuitComponent component, RetractPartEvent args)
     {
-        if (!component.SpawnedParts.TryGetValue(part, out var entity))
+        if (_net.IsClient)
             return;
-
+        if (!component.SpawnedParts.TryGetValue(args.Part, out var entity))
+            return;
+        var perfomer = GetEntity(args.Performer);
         RemComp<UnremoveableComponent>(entity);
 
-        var slot = ModsuitContainers.GetInventorySlot(part);
+        var slot = ModsuitContainers.GetInventorySlot(args.Part);
 
-        if (!_inventory.TryUnequip(modsuit, wearer, slot, force: true))
+        if (!_inventory.TryUnequip(uid, perfomer, slot, force: true))
             return;
 
-        var container = _container.EnsureContainer<ContainerSlot>(modsuit, ModsuitContainers.GetPartContainer(part));
+        var container = _container.EnsureContainer<ContainerSlot>(uid, ModsuitContainers.GetPartContainer(args.Part));
 
         if (!_container.Insert(entity, container))
             return;
 
-        if (ModsuitContainers.TryGetStorageContainer(part, out var storageName))
+        if (ModsuitContainers.TryGetStorageContainer(args.Part, out var storageName))
         {
-            if (!_container.TryGetContainer(modsuit, storageName, out var baseContainer))
+            if (!_container.TryGetContainer(uid, storageName, out var baseContainer))
                 return;
             if (baseContainer is not ContainerSlot storage)
                 return;
@@ -197,13 +214,13 @@ public sealed partial class SharedModsuitSystem : EntitySystem
             {
                 var oldItem = storage.ContainedEntity.Value;
                 _container.Remove(oldItem, storage);
-                _inventory.TryEquip(wearer, oldItem, slot, force: true);
+                _inventory.TryEquip(perfomer, oldItem, slot, force: true);
             }
         }
-        _audio.PlayPvs(component.DeploySound, wearer, AudioParams.Default.WithVolume(-2f));
-        component.DeployedParts[part] = false;
+        _audio.PlayPvs(component.DeploySound, perfomer, AudioParams.Default.WithVolume(-2f));
+        component.DeployedParts[args.Part] = false;
 
         if (!component.DeployedParts.Values.Any(x => x))
-            RemComp<UnremoveableComponent>(modsuit);
+            RemComp<UnremoveableComponent>(uid);
     }
 }

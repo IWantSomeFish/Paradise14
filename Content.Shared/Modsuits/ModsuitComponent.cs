@@ -12,6 +12,16 @@ namespace Content.Shared.Modsuits.Components;
 public sealed partial class ModsuitComponent : Component
 {
     /// <summary>
+    ///  Some modsuits, like cargo, can be some...non-hermitic, and we must deal with it.
+    /// When we dont provide barotrauma protection for that mode.
+    /// </summary>
+    [DataField]
+    public bool ProvidesPressureProtection = true;
+    [DataField]
+    public bool ProvidesTemperatureProtection = true;
+    [DataField]
+    public bool ProvidesInternals = true;
+    /// <summary>
     /// The sounds paths
     /// </summary>
     [DataField]
@@ -19,7 +29,7 @@ public sealed partial class ModsuitComponent : Component
     [DataField]
     public SoundSpecifier ErrorSound = new SoundPathSpecifier("/Audio/Machines/airlock_deny.ogg");
     [DataField]
-    public SoundSpecifier PowerOnSound = new SoundPathSpecifier("/Audio/Machines/airlock_deny.ogg");
+    public SoundSpecifier PowerOnSound = new SoundPathSpecifier("/Audio/Misc/cryo_warning.ogg");
     /// <summary>
     /// Proyo ID of actions
     /// </summary>

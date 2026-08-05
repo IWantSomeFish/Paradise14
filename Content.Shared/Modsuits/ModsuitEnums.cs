@@ -22,6 +22,5 @@ public enum ModsuitUiKey
 [Serializable, NetSerializable]
 public enum ModsuitVisuals : byte
 {
-    Activated,
     IconLayer
 }

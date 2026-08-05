@@ -21,10 +21,10 @@
   components:
   - type: Action
     itemIconStyle: NoItem
+    useDelay: 10
   - type: Sprite
     sprite: Interface/Actions/actions_modsuit.rsi
     layers:
     - state: activate
   - type: InstantAction
     event: !type:PowerModsuit
-    useDelay: 10
