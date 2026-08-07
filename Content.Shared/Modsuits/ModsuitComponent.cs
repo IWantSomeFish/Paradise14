@@ -13,12 +13,20 @@ public sealed partial class ModsuitComponent : Component
 {
     /// <summary>
     ///  Some modsuits, like cargo, can be some...non-hermitic, and we must deal with it.
-    /// When we dont provide barotrauma protection for that mode.
+    /// This variables resolve this problem
     /// </summary>
     [DataField]
-    public bool ProvidesPressureProtection = true;
+    public float HighPressureMultiplierOnline = 0.1f;
     [DataField]
-    public bool ProvidesTemperatureProtection = true;
+    public float HighPressureMultiplierOffline = 1f;
+    [DataField]
+    public float LowPressureMultiplierOnline = 1000f;
+    [DataField]
+    public float LowPressureMultiplierOffline = 1f;
+    [DataField]
+    public float TempratureCoefficientOnline = 0.1f;
+    [DataField]
+    public float TempratureCoefficientOffline = 1f;
     [DataField]
     public bool ProvidesInternals = true;
     /// <summary>
@@ -47,7 +55,7 @@ public sealed partial class ModsuitComponent : Component
     [ViewVariables, AutoNetworkedField]
     public Dictionary<ModsuitPartType, EntityUid> SpawnedParts = new();
     [ViewVariables, AutoNetworkedField]
-    public int ActivateDelay = 2;
+    public double ActivateDelay = 1.0;
     [ViewVariables, AutoNetworkedField]
     public bool PowerOn = false;
 }

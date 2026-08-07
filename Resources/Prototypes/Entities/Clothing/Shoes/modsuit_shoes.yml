@@ -18,6 +18,8 @@
       shoes:
       - state: equipped-boots
 
+  - type: ModsuitClothing
+
   - type: ToggleableVisuals
     spriteLayer: enum.ToggleableVisuals.Layer
     clothingVisuals:

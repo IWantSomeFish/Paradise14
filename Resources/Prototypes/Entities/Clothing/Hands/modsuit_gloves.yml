@@ -18,6 +18,8 @@
       gloves:
       - state: equipped-gloves
 
+  - type: ModsuitClothing
+
   - type: ToggleableVisuals
     spriteLayer: enum.ToggleableVisuals.Layer
     clothingVisuals:

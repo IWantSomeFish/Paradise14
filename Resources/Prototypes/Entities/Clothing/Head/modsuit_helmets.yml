@@ -18,6 +18,12 @@
       head:
       - state: equipped-helmet
 
+  - type: PressureProtection
+    highPressureMultiplier: 1
+    lowPressureMultiplier: 1
+
+  - type: ModsuitClothing
+
   - type: ToggleableVisuals
     spriteLayer: enum.ToggleableVisuals.Layer
     clothingVisuals:

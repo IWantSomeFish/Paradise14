@@ -29,6 +29,11 @@ public static class ModsuitContainers
         { ModsuitPartType.Gloves, "gloves" },
         { ModsuitPartType.Boots, "boots" },
     };
+    public static readonly Dictionary<ModsuitPartType, string> ProtectionSlots = new()
+    {
+        { ModsuitPartType.Helmet, "helmet" },
+        { ModsuitPartType.Chest, "chestplate" },
+    };
     public static string GetPartContainer(ModsuitPartType part)
         => PartContainers[part];
     public static string GetInventorySlot(ModsuitPartType part)

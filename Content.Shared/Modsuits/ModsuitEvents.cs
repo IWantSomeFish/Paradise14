@@ -11,6 +11,9 @@ public sealed partial class DeployModsuit : InstantActionEvent
 public sealed partial class PowerModsuit : InstantActionEvent
 {
 }
+public sealed partial class CheckAirtightnessEvent : EntityEventArgs
+{
+}
 [Serializable, NetSerializable]
 public sealed class ModsuitSystemMessage(ModsuitPartType part) : BoundUserInterfaceMessage
 {
