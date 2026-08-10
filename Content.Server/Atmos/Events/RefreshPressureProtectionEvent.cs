@@ -1,19 +1,22 @@
+using Content.Shared.Inventory;
+
 namespace Content.Server.Atmos.Events
 {
-    public sealed partial class RefreshPressureProtectionEvent : EntityEventArgs
+    public sealed class RefreshPressureProtectiondModifiersEvent : EntityEventArgs
     {
-        public EntityUid Performer;
-        public float HighPressureMultiplier = 1f;
-        public float HighPressureModifier;
-        public float LowPressureMultiplier = 1f;
-        public float LowPressureModifier;
-        public RefreshPressureProtectionEvent(EntityUid performer, float highPressureMultiplier, float highPressureModifier, float lowPressureMultiplier, float lowPressureModifier)
+        public List<SlotFlags> TargetSlots { get; } = new() { SlotFlags.HEAD, SlotFlags.OUTERCLOTHING };
+
+        public float LowPressureModifier { get; private set; } = 0f;
+        public float LowPressureMultiplier { get; private set; } = 1.0f;
+        public float HighPressureModifier { get; private set; } = 0f;
+        public float HighPressureMultiplier { get; private set; } = 1.0f;
+
+        public void ModifyProtection(float lowPressureMod, float lowPressureMult, float highPressureMod, float highPressureMult)
         {
-            Performer = performer;
-            HighPressureMultiplier = highPressureMultiplier;
-            HighPressureModifier = highPressureModifier;
-            LowPressureMultiplier = lowPressureMultiplier;
-            LowPressureModifier = lowPressureModifier;
+            LowPressureModifier += lowPressureMod;
+            LowPressureMultiplier *= lowPressureMult;
+            HighPressureModifier += highPressureMod;
+            HighPressureMultiplier *= highPressureMult;
         }
     }
 }

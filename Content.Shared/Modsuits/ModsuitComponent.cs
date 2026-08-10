@@ -15,18 +15,11 @@ public sealed partial class ModsuitComponent : Component
     ///  Some modsuits, like cargo, can be some...non-hermitic, and we must deal with it.
     /// This variables resolve this problem
     /// </summary>
+    ///
     [DataField]
-    public float HighPressureMultiplierOnline = 0.1f;
+    public bool ProvidesPressureProtection = true;
     [DataField]
-    public float HighPressureMultiplierOffline = 1f;
-    [DataField]
-    public float LowPressureMultiplierOnline = 1000f;
-    [DataField]
-    public float LowPressureMultiplierOffline = 1f;
-    [DataField]
-    public float TempratureCoefficientOnline = 0.1f;
-    [DataField]
-    public float TempratureCoefficientOffline = 1f;
+    public bool ProvidesTempretureProtection = true;
     [DataField]
     public bool ProvidesInternals = true;
     /// <summary>

@@ -30,7 +30,6 @@ namespace Content.Server.Atmos.EntitySystems
             SubscribeLocalEvent<PressureProtectionComponent, GotUnequippedEvent>(OnPressureProtectionUnequipped);
             SubscribeLocalEvent<PressureProtectionComponent, ComponentInit>(OnUpdateResistance);
             SubscribeLocalEvent<PressureProtectionComponent, ComponentRemove>(OnUpdateResistance);
-            SubscribeLocalEvent<PressureProtectionComponent, RefreshPressureProtectionEvent>(OnPressureUpdate);
             SubscribeLocalEvent<PressureImmunityComponent, ComponentInit>(OnPressureImmuneInit);
             SubscribeLocalEvent<PressureImmunityComponent, ComponentRemove>(OnPressureImmuneRemove);
         }
@@ -290,19 +289,35 @@ namespace Content.Server.Atmos.EntitySystems
             }
         }
 
-        private void OnPressureUpdate(Entity<PressureProtectionComponent> ent, ref RefreshPressureProtectionEvent args)
+        public void RefresPressureProtectionModifiers(Entity<PressureProtectionComponent> ent)
         {
-            if (!Resolve(ent, ref ent.Comp!, false))
+            var comp = ent.Comp;
+            if (comp == null)
                 return;
 
-            var comp = ent.Comp;
-            comp.LowPressureModifier = args.LowPressureModifier;
-            comp.LowPressureMultiplier = args.LowPressureMultiplier;
-            comp.HighPressureModifier = args.HighPressureModifier;
-            comp.HighPressureMultiplier = args.HighPressureMultiplier;
-            if (TryComp<BarotraumaComponent>(args.Performer, out var baroTraumaComp))
-                UpdateCachedResistances(args.Performer, baroTraumaComp);
-            return;
+            if (!Resolve(ent, ref comp, false))
+                return;
+
+            ent.Comp = comp;
+
+            var ev = new RefreshPressureProtectiondModifiersEvent();
+            RaiseLocalEvent(ent, ev);
+
+            if (MathHelper.CloseTo(ev.LowPressureModifier, comp.LowPressureModifier) &&
+                MathHelper.CloseTo(ev.LowPressureMultiplier, comp.LowPressureMultiplier) &&
+                MathHelper.CloseTo(ev.HighPressureModifier, comp.HighPressureModifier) &&
+                MathHelper.CloseTo(ev.HighPressureMultiplier, comp.HighPressureMultiplier)
+                )
+                return;
+
+            comp.LowPressureModifier += ev.LowPressureModifier;
+            comp.LowPressureMultiplier *= ev.LowPressureMultiplier;
+            comp.HighPressureModifier += ev.HighPressureModifier;
+            comp.HighPressureMultiplier *= ev.HighPressureMultiplier;
+            if (TryComp<BarotraumaComponent>(ent, out var barotrauma))
+            {
+                UpdateCachedResistances(ent, barotrauma);
+            }
         }
     }
 }

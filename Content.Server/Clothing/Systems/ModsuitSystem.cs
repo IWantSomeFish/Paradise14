@@ -4,6 +4,7 @@ using Content.Server.Atmos.EntitySystems;
 using Content.Server.Atmos.Events;
 using Content.Server.Temperature.Components;
 using Content.Shared.Atmos.Components;
+using Content.Shared.Clothing.Components;
 using Content.Shared.Interaction.Components;
 using Content.Shared.Inventory;
 using Content.Shared.Inventory.Events;
@@ -29,6 +30,7 @@ public sealed partial class ModsuitSystem : SharedModsuitSystem
     public override void Initialize()
     {
         base.Initialize();
+        SubscribeLocalEvent<PressureProtectionComponent, RefreshPressureProtectiondModifiersEvent>(OnPressureProtectionEvent);
     }
 
     protected override void DeployPart(EntityUid uid, ModsuitComponent component, DeployPartEvent args)
@@ -137,12 +139,13 @@ public sealed partial class ModsuitSystem : SharedModsuitSystem
             if (component.ProvidesInternals)
                 EnsureComp<BreathToolComponent>(component.SpawnedParts[ModsuitPartType.Helmet]);
 
-            foreach (var part in ModsuitContainers.ProtectionSlots)
+            if (component.ProvidesPressureProtection)
             {
-                if (_container.TryGetContainingContainer(component.SpawnedParts[part.Key], out var container))
+                foreach (var part in ModsuitContainers.ProtectionSlots)
                 {
-                    var updateEvent = new RefreshPressureProtectionEvent(container.Owner, component.HighPressureMultiplierOnline, 0, component.LowPressureMultiplierOnline, 0);
-                    RaiseLocalEvent(component.SpawnedParts[part.Key], updateEvent);
+                    var partEntity = component.SpawnedParts[part.Key];
+                    if (EnsureComp<PressureProtectionComponent>(partEntity, out var pressureProtection))
+                        _barotraumaSystem.RefresPressureProtectionModifiers((partEntity, pressureProtection));
                 }
             }
         }
@@ -150,15 +153,24 @@ public sealed partial class ModsuitSystem : SharedModsuitSystem
         {
             if (TryComp<BreathToolComponent>(component.SpawnedParts[ModsuitPartType.Helmet], out _))
                 RemComp<BreathToolComponent>(component.SpawnedParts[ModsuitPartType.Helmet]);
-
             foreach (var part in ModsuitContainers.ProtectionSlots)
             {
-                if (_container.TryGetContainingContainer(component.SpawnedParts[part.Key], out var container))
-                {
-                    var updateEvent = new RefreshPressureProtectionEvent(container.Owner, component.HighPressureMultiplierOffline, 0, component.LowPressureMultiplierOffline, 0);
-                    RaiseLocalEvent(component.SpawnedParts[part.Key], updateEvent);
-                }
+                var partEntity = component.SpawnedParts[part.Key];
+                if (TryComp<PressureProtectionComponent>(partEntity, out var pressureProtection))
+                    _barotraumaSystem.RefresPressureProtectionModifiers((partEntity, pressureProtection));
             }
         }
+    }
+    private void OnPressureProtectionEvent(Entity<PressureProtectionComponent> ent, ref RefreshPressureProtectiondModifiersEvent args)
+    {
+        if (!TryComp<ModsuitClothingComponent>(ent, out var comp))
+            return;
+        args.ModifyProtection(
+            (comp.ValuesChanged ? -1 : 0) * comp.LowPressureModifier,
+            comp.ValuesChanged ? 1f / comp.LowPressureMultiplier : comp.LowPressureMultiplier,
+            (comp.ValuesChanged ? -1 : 0) * comp.HighPressureModifier,
+            comp.ValuesChanged ? 1f / comp.HighPressureMultiplier : comp.HighPressureMultiplier
+        );
+        comp.ValuesChanged = !comp.ValuesChanged;
     }
 }
