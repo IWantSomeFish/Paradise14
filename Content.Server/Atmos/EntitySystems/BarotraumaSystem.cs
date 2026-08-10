@@ -288,7 +288,10 @@ namespace Content.Server.Atmos.EntitySystems
                 }
             }
         }
-
+        /// <summary>
+        /// PARADISE EDIT START - Function for modify clothing pressure protection paramets.
+        /// This feature was not originally provided by the Wizards.
+        /// </summary>
         public void RefresPressureProtectionModifiers(Entity<PressureProtectionComponent> ent)
         {
             var comp = ent.Comp;
@@ -319,5 +322,8 @@ namespace Content.Server.Atmos.EntitySystems
                 UpdateCachedResistances(ent, barotrauma);
             }
         }
+        /// <summary>
+        /// PARADISE EDIT - END
+        /// </summary>
     }
 }
