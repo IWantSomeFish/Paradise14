@@ -323,7 +323,7 @@ namespace Content.Server.Atmos.EntitySystems
             }
         }
         /// <summary>
-        /// PARADISE EDIT - END
+        /// PARADISE EDIT END
         /// </summary>
     }
 }
