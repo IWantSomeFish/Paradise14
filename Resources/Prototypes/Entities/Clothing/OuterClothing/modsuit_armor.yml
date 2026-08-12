@@ -1,6 +1,6 @@
 - type: entity
   id: StandardModChest
-  parent: ClothingOuterBase
+  parent: [ClothingOuterBase]
   name: standard MOD chestplate
   components:
     - type: Sprite
@@ -21,11 +21,15 @@
       highPressureMultiplier: 1
       lowPressureMultiplier: 1
 
+    - type: TemperatureProtection
+      coefficient: 0.8
+
     - type: ModsuitClothing
       lowPressureModifier: 0
       lowPressureMultiplier: 1000
       highPressureModifier: 0
       highPressureMultiplier: 0.1
+      coefficientModifier: 0.8
 
     - type: ToggleableVisuals
       spriteLayer: enum.ToggleableVisuals.Layer

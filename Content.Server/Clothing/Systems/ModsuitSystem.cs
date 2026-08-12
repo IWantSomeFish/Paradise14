@@ -1,13 +1,14 @@
 using System.Linq;
+using System.Runtime.CompilerServices;
 using Content.Server.Atmos.Components;
 using Content.Server.Atmos.EntitySystems;
 using Content.Server.Atmos.Events;
 using Content.Server.Temperature.Components;
+using Content.Server.Temperature.Events;
+using Content.Server.Temperature.Systems;
 using Content.Shared.Atmos.Components;
-using Content.Shared.Clothing.Components;
 using Content.Shared.Interaction.Components;
 using Content.Shared.Inventory;
-using Content.Shared.Inventory.Events;
 using Content.Shared.Modsuits;
 using Content.Shared.Modsuits.Components;
 using Content.Shared.Modsuits.Events;
@@ -16,6 +17,7 @@ using Robust.Shared.Audio;
 using Robust.Shared.Audio.Systems;
 using Robust.Shared.Containers;
 using Robust.Shared.Timing;
+using DependencyAttribute = Robust.Shared.IoC.DependencyAttribute;
 
 namespace Content.Server.Clothing.System;
 
@@ -26,11 +28,13 @@ public sealed partial class ModsuitSystem : SharedModsuitSystem
     [Dependency] private SharedAudioSystem _audio = default!;
     [Dependency] private SharedAppearanceSystem _appearance = default!;
     [Dependency] private BarotraumaSystem _barotraumaSystem = default!;
+    [Dependency] private TemperatureSystem _temperatureSystem = default!;
 
     public override void Initialize()
     {
         base.Initialize();
         SubscribeLocalEvent<PressureProtectionComponent, RefreshPressureProtectiondModifiersEvent>(OnPressureProtectionEvent);
+        SubscribeLocalEvent<TemperatureProtectionComponent, RefreshTempratureProtectiondModifiersEvent>(OnTempratureProtectionEvent);
     }
 
     protected override void DeployPart(EntityUid uid, ModsuitComponent component, DeployPartEvent args)
@@ -68,7 +72,8 @@ public sealed partial class ModsuitSystem : SharedModsuitSystem
         {
             EnsureComp<UnremoveableComponent>(uid);
         }
-        RaiseLocalEvent(uid, new CheckAirtightnessEvent());
+        if (component.PowerOn)
+            RaiseLocalEvent(uid, new CheckAirtightnessEvent());
     }
     protected override void RetractPart(EntityUid uid, ModsuitComponent component, RetractPartEvent args)
     {
@@ -105,7 +110,8 @@ public sealed partial class ModsuitSystem : SharedModsuitSystem
 
         if (!component.DeployedParts.Values.Any(x => x))
             RemComp<UnremoveableComponent>(uid);
-        RaiseLocalEvent(uid, new CheckAirtightnessEvent());
+        if (component.PowerOn)
+            RaiseLocalEvent(uid, new CheckAirtightnessEvent());
     }
     protected override void OnActivate(EntityUid uid, ModsuitComponent component, PowerModsuit args)
     {
@@ -138,15 +144,21 @@ public sealed partial class ModsuitSystem : SharedModsuitSystem
         {
             if (component.ProvidesInternals)
                 EnsureComp<BreathToolComponent>(component.SpawnedParts[ModsuitPartType.Helmet]);
-
-            if (component.ProvidesPressureProtection)
+            foreach (var part in ModsuitContainers.ProtectionSlots)
             {
-                foreach (var part in ModsuitContainers.ProtectionSlots)
+                var partEntity = component.SpawnedParts[part.Key];
+                if (component.ProvidesPressureProtection)
                 {
-                    var partEntity = component.SpawnedParts[part.Key];
-                    if (EnsureComp<PressureProtectionComponent>(partEntity, out var pressureProtection))
+                    if (TryComp<PressureProtectionComponent>(partEntity, out var pressureProtection))
                         _barotraumaSystem.RefresPressureProtectionModifiers((partEntity, pressureProtection));
                 }
+                if (component.ProvidesTempretureProtection)
+                {
+                    if (TryComp<TemperatureProtectionComponent>(partEntity, out var temperatureProtection))
+                        _temperatureSystem.RefresTempratureProtectionModifiers((partEntity, temperatureProtection));
+                }
+                if (TryComp<ModsuitClothingComponent>(partEntity, out var modComp))
+                    modComp.ValuesChanged = true;
             }
         }
         else
@@ -158,6 +170,10 @@ public sealed partial class ModsuitSystem : SharedModsuitSystem
                 var partEntity = component.SpawnedParts[part.Key];
                 if (TryComp<PressureProtectionComponent>(partEntity, out var pressureProtection))
                     _barotraumaSystem.RefresPressureProtectionModifiers((partEntity, pressureProtection));
+                if (TryComp<TemperatureProtectionComponent>(partEntity, out var temperatureProtection))
+                    _temperatureSystem.RefresTempratureProtectionModifiers((partEntity, temperatureProtection));
+                if (TryComp<ModsuitClothingComponent>(partEntity, out var modComp))
+                    modComp.ValuesChanged = false;
             }
         }
     }
@@ -166,11 +182,18 @@ public sealed partial class ModsuitSystem : SharedModsuitSystem
         if (!TryComp<ModsuitClothingComponent>(ent, out var comp))
             return;
         args.ModifyProtection(
-            (comp.ValuesChanged ? -1 : 0) * comp.LowPressureModifier,
+            (comp.ValuesChanged ? -1 : 1) * comp.LowPressureModifier,
             comp.ValuesChanged ? 1f / comp.LowPressureMultiplier : comp.LowPressureMultiplier,
-            (comp.ValuesChanged ? -1 : 0) * comp.HighPressureModifier,
+            (comp.ValuesChanged ? -1 : 1) * comp.HighPressureModifier,
             comp.ValuesChanged ? 1f / comp.HighPressureMultiplier : comp.HighPressureMultiplier
         );
-        comp.ValuesChanged = !comp.ValuesChanged;
+    }
+    private void OnTempratureProtectionEvent(Entity<TemperatureProtectionComponent> ent, ref RefreshTempratureProtectiondModifiersEvent args)
+    {
+        if (!TryComp<ModsuitClothingComponent>(ent, out var comp))
+            return;
+        args.ModifyProtection(
+            (comp.ValuesChanged ? 1 : -1) * comp.CoefficientModifier
+        );
     }
 }
