@@ -1,6 +1,6 @@
 - type: entity
   id: StandardModChest
-  parent: [ClothingOuterBase]
+  parent: [ClothingOuterBase, AllowSuitStorageClothing]
   name: standard MOD chestplate
   components:
     - type: Sprite
