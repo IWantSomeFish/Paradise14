@@ -20,8 +20,6 @@ public sealed partial class ModsuitComponent : Component
     public bool ProvidesPressureProtection = true;
     [DataField]
     public bool ProvidesTempretureProtection = true;
-    [DataField]
-    public bool ProvidesInternals = true;
     /// <summary>
     /// The sounds paths
     /// </summary>

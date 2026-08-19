@@ -7,6 +7,10 @@ using Content.Server.Temperature.Components;
 using Content.Server.Temperature.Events;
 using Content.Server.Temperature.Systems;
 using Content.Shared.Atmos.Components;
+using Content.Shared.Clothing;
+using Content.Shared.Clothing.Components;
+using Content.Shared.Humanoid;
+using Content.Shared.IdentityManagement.Components;
 using Content.Shared.Interaction.Components;
 using Content.Shared.Inventory;
 using Content.Shared.Modsuits;
@@ -140,10 +144,27 @@ public sealed partial class ModsuitSystem : SharedModsuitSystem
     protected override void CheckAirtightness(Entity<ModsuitComponent> ent, ref CheckAirtightnessEvent args)
     {
         var component = ent.Comp;
+        var helmet = component.SpawnedParts[ModsuitPartType.Helmet];
         if (component.PowerOn && component.DeployedParts[ModsuitPartType.Helmet] && component.DeployedParts[ModsuitPartType.Chest])
         {
-            if (component.ProvidesInternals)
-                EnsureComp<BreathToolComponent>(component.SpawnedParts[ModsuitPartType.Helmet]);
+            EnsureComp<BreathToolComponent>(helmet);
+            EnsureComp<IdentityBlockerComponent>(helmet);
+            if (!EnsureComp<HideLayerClothingComponent>(helmet, out var hideComp))
+            {
+                hideComp.Layers = new()
+                {
+                    {HumanoidVisualLayers.Hair, SlotFlags.HEAD},
+                    {HumanoidVisualLayers.Snout, SlotFlags.HEAD},
+                    {HumanoidVisualLayers.HeadTop, SlotFlags.HEAD},
+                    {HumanoidVisualLayers.HeadSide, SlotFlags.HEAD},
+                    {HumanoidVisualLayers.FacialHair, SlotFlags.HEAD},
+                };
+            }
+            if (TryComp<ClothingComponent>(helmet, out var clothComp) && _container.TryGetContainingContainer(helmet, out var container))
+            {
+                var clothingGotEquippedEvent = new ClothingGotEquippedEvent(container.Owner, clothComp);
+                RaiseLocalEvent(helmet, ref clothingGotEquippedEvent);
+            }
             foreach (var part in ModsuitContainers.ProtectionSlots)
             {
                 var partEntity = component.SpawnedParts[part.Key];
@@ -163,8 +184,17 @@ public sealed partial class ModsuitSystem : SharedModsuitSystem
         }
         else
         {
-            if (TryComp<BreathToolComponent>(component.SpawnedParts[ModsuitPartType.Helmet], out _))
-                RemComp<BreathToolComponent>(component.SpawnedParts[ModsuitPartType.Helmet]);
+            if (!component.DeployedParts[ModsuitPartType.Helmet])
+            {
+                if (TryComp<ClothingComponent>(helmet, out var clothComp) && _container.TryGetContainingContainer(helmet, out var container))
+                {
+                    var clothingGotUnequippedEvent = new ClothingGotUnequippedEvent(container.Owner, clothComp);
+                    RaiseLocalEvent(helmet, ref clothingGotUnequippedEvent);
+                }
+                RemComp<BreathToolComponent>(helmet);
+                RemComp<IdentityBlockerComponent>(helmet);
+                RemComp<HideLayerClothingComponent>(helmet);
+            }
             foreach (var part in ModsuitContainers.ProtectionSlots)
             {
                 var partEntity = component.SpawnedParts[part.Key];
